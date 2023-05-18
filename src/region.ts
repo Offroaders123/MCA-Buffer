@@ -1,7 +1,7 @@
-import { readChunks } from "./chunk.js";
+import { readChunks, Chunk } from "./chunk.js";
 
-export async function readRegion(data: Uint8Array){
+export async function* readRegion(data: Uint8Array): AsyncGenerator<Chunk | null,void,void> {
   for await (const chunk of readChunks(data)){
-    console.log(chunk);
+    yield chunk;
   }
 }

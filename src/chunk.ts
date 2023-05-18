@@ -1,70 +1,49 @@
-import { inflate, gunzip } from "node:zlib";
-import { promisify } from "node:util";
-import { read, ReadOptions } from "nbtify";
-
+import { read, NBTData, Compression } from "nbtify";
 import { readLocations } from "./location.js";
 
-const inflateAsync = promisify(inflate);
-const gunzipAsync = promisify(gunzip);
+const HEADER_LENGTH = 5;
 
-export interface Chunk {}
+export interface Chunk extends NBTData {}
 
-const NBT_FORMAT = {
-  endian: "big",
-  compression: null,
-  isNamed: true,
-  isBedrockLevel: false
-} as const satisfies ReadOptions;
-
-export async function* readChunks(data: Uint8Array): AsyncGenerator<Chunk,void,void> {
-  for await (const chunk of getChunk(data)){
-    if (chunk === null) continue;
-    const { data: result } = await read(chunk,NBT_FORMAT);
-    yield result as Chunk;
-  }
+interface Header {
+  byteLength: number;
+  format: CompressionFormat;
 }
 
-async function* getChunk(data: Uint8Array): AsyncGenerator<Uint8Array | null,void,void> {
-  for (const { byteOffset, byteLength } of readLocations(data)){
-    if (byteLength === 0) yield null;
-    yield decompressChunk(data.subarray(byteOffset,byteOffset + byteLength));
-  }
-}
-
-const COMPRESSION_HEADER_LENGTH = 5;
-
-/**
- * 1 - gzip,
- * 2 - zlib (DEFLATE),
- * 3 - Uncompressed
-*/
 type CompressionFormat = 1 | 2 | 3;
 
-interface CompressionHeader {
-  compressedLength: number;
-  compression: CompressionFormat;
+export async function* readChunks(data: Uint8Array): AsyncGenerator<Chunk | null,void,void> {
+  for (const chunk of getChunk(data)){
+    if (chunk === null){ yield chunk; continue; }
+
+    const { byteLength, format } = readHeader(chunk);
+    const compressedData = chunk.subarray(HEADER_LENGTH,HEADER_LENGTH + byteLength);
+    const compression = getCompression(format);
+
+    yield read(compressedData,{ endian: "big", compression, isNamed: true, isBedrockLevel: false });
+  }
 }
 
-function readCompressionHeader(data: Uint8Array): CompressionHeader {
+function* getChunk(data: Uint8Array): Generator<Uint8Array | null,void,void> {
+  for (const { byteOffset, byteLength } of readLocations(data)){
+    if (byteLength === 0){ yield null; continue; }
+    yield data.subarray(byteOffset,byteOffset + byteLength);
+  }
+}
+
+function readHeader(data: Uint8Array): Header {
   const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
 
-  const compressedLength = view.getUint32(0);
-  const compression = view.getUint8(4) as CompressionFormat;
+  const byteLength = view.getUint32(0) - 1;
+  const format = view.getUint8(4) as CompressionFormat;
 
-  return { compressedLength, compression };
+  return { byteLength, format };
 }
 
-async function decompressChunk(data: Uint8Array): Promise<Uint8Array | null> {
-  if (data.byteLength < COMPRESSION_HEADER_LENGTH) return null;
-
-  const { compressedLength, compression } = readCompressionHeader(data);
-  // console.log(compressedLength,compression);
-
-  const compressedData = data.subarray(COMPRESSION_HEADER_LENGTH,COMPRESSION_HEADER_LENGTH + compressedLength - 1);
-
-  switch (compression){
-    case 1: return gunzipAsync(compressedData);
-    case 2: return inflateAsync(compressedData);
-    case 3: return compressedData;
+function getCompression(format: CompressionFormat): Compression | null {
+  switch (format){
+    case 1: return "gzip";
+    case 2: return "deflate";
+    case 3: return null;
   }
 }
