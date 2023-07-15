@@ -1,18 +1,21 @@
 export const LOCATION_LENGTH = 4;
 export const LOCATIONS_LENGTH = 4096;
+export const LOCATIONS_OFFSET = 0;
 
 export interface Location {
   byteOffset: number;
   byteLength: number;
 }
 
-export function* readLocations(data: Uint8Array): Generator<Location,void,void> {
+export function readLocations(data: Uint8Array): Location[] {
   const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
+  const locations: Location[] = [];
 
-  for (let i = 0; i < LOCATIONS_LENGTH; i += LOCATION_LENGTH){
+  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
     const byteOffset = (view.getUint32(i) >> 8) * LOCATIONS_LENGTH;
     const byteLength = view.getUint8(i + 3) * LOCATIONS_LENGTH;
-
-    yield { byteOffset, byteLength };
+    locations.push({ byteOffset, byteLength });
   }
+
+  return locations;
 }
