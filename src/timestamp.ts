@@ -6,8 +6,8 @@ export const TIMESTAMPS_OFFSET = LOCATIONS_LENGTH;
 
 export type Timestamp = number;
 
-export function readTimestamps(data: Uint8Array): Timestamp[] {
-  const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
+export function readTimestamps(region: Uint8Array): Timestamp[] {
+  const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
   const timestamps: Timestamp[] = [];
 
   for (let i = TIMESTAMPS_OFFSET; i < TIMESTAMPS_OFFSET + TIMESTAMPS_LENGTH; i += TIMESTAMP_LENGTH){

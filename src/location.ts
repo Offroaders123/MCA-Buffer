@@ -7,8 +7,8 @@ export interface Location {
   byteLength: number;
 }
 
-export function readLocations(data: Uint8Array): Location[] {
-  const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
+export function readLocations(region: Uint8Array): Location[] {
+  const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
   const locations: Location[] = [];
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
