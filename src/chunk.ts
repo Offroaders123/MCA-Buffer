@@ -3,7 +3,11 @@ import { readLocations } from "./location.js";
 
 const HEADER_LENGTH = 5;
 
-export interface Chunk extends NBTData {}
+export interface Chunk extends NBTData<{
+  xPos: number;
+  yPos: number;
+  zPos: number;
+}> {}
 
 interface Header {
   byteLength: number;
@@ -20,7 +24,7 @@ export async function* readChunks(data: Uint8Array): AsyncGenerator<Chunk | null
     const compressedData = chunk.subarray(HEADER_LENGTH,HEADER_LENGTH + byteLength);
     const compression = getCompression(format);
 
-    yield read(compressedData,{ endian: "big", compression, isNamed: true, isBedrockLevel: false });
+    yield read(compressedData,{ endian: "big", compression, name: true, bedrockLevel: false });
   }
 }
 
