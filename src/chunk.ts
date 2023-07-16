@@ -1,12 +1,18 @@
-import { read as readNBT, write as writeNBT } from "nbtify";
+import { read as readNBT, write as writeNBT, NBTData } from "nbtify";
 
-import type { FormatOptions, NBTData } from "nbtify";
+import type { IntTag, FormatOptions } from "nbtify";
 
 export const HEADER_LENGTH = 5;
 export const SCHEME_LENGTH = 1;
 
 export type Compression = "gzip" | "deflate" | null;
 export type CompressionScheme = 1 | 2 | 3;
+
+export interface ChunkData {
+  xPos: IntTag;
+  yPos: IntTag;
+  zPos: IntTag;
+}
 
 export interface Format extends FormatOptions {
   name: "";
@@ -15,7 +21,16 @@ export interface Format extends FormatOptions {
   bedrockLevel: null;
 }
 
-export type Chunk = NBTData<any,Format>;
+export class Chunk extends NBTData implements Format {
+  override readonly name = "";
+  override readonly endian = "big";
+  override readonly compression: Compression = "deflate";
+  override readonly bedrockLevel = null;
+
+  constructor(data: NBTData<ChunkData,Format>) {
+    super(data);
+  }
+}
 
 export interface Header {
   byteLength: number;
@@ -25,7 +40,7 @@ export interface Header {
 export async function readChunk(chunk: Uint8Array): Promise<Chunk> {
   const { byteLength, compression } = readHeader(chunk);
   const data = chunk.subarray(HEADER_LENGTH,HEADER_LENGTH + byteLength);
-  return readNBT(data,{ endian: "big", compression, name: true, bedrockLevel: false });
+  return new Chunk(await readNBT(data,{ endian: "big", compression, name: true, bedrockLevel: false }));
 }
 
 export function readHeader(chunk: Uint8Array): Header {
