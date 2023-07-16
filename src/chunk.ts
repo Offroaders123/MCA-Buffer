@@ -21,7 +21,7 @@ export interface Format extends FormatOptions {
   bedrockLevel: null;
 }
 
-export class Chunk extends NBTData implements Format {
+export class Chunk extends NBTData<ChunkData> implements Format {
   override readonly name = "";
   override readonly endian = "big";
   override readonly compression: Compression = "deflate";
@@ -29,6 +29,14 @@ export class Chunk extends NBTData implements Format {
 
   constructor(data: NBTData<ChunkData,Format>) {
     super(data);
+  }
+
+  getPos(): { x: number; y: number; z: number; } {
+    const { xPos, yPos, zPos } = this.data;
+    const x = xPos.valueOf();
+    const y = yPos.valueOf();
+    const z = zPos.valueOf();
+    return { x, y, z };
   }
 }
 
