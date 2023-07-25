@@ -1,6 +1,6 @@
 import { read as readNBT, write as writeNBT, NBTData } from "nbtify";
 
-import type { IntTag, FormatOptions } from "nbtify";
+import type { IntTag, CompoundTag, FormatOptions } from "nbtify";
 
 export const HEADER_LENGTH = 5;
 export const SCHEME_LENGTH = 1;
@@ -8,7 +8,7 @@ export const SCHEME_LENGTH = 1;
 export type Compression = "gzip" | "deflate" | null;
 export type CompressionScheme = 1 | 2 | 3;
 
-export interface ChunkData {
+export interface ChunkData extends CompoundTag {
   xPos: IntTag;
   yPos: IntTag;
   zPos: IntTag;

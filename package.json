@@ -10,7 +10,7 @@
     "dev": "tsc -w"
   },
   "dependencies": {
-    "nbtify": "^1.60.2"
+    "nbtify": "^1.63.0"
   },
   "devDependencies": {
     "@types/node": "^20.4.2",
