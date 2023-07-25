@@ -23,23 +23,14 @@ export interface Format extends FormatOptions {
 
 export interface Pos { x: number; y: number; z: number; }
 
-export class Chunk extends NBTData<ChunkData> implements Format {
-  override readonly name = "";
-  override readonly endian = "big";
-  override readonly compression: Compression = "deflate";
-  override readonly bedrockLevel = null;
+export type Chunk = NBTData<ChunkData,Format>;
 
-  constructor(data: NBTData<ChunkData,Format>) {
-    super(data);
-  }
-
-  pos(): Pos {
-    const { xPos, yPos, zPos } = this.data;
-    const x = xPos.valueOf();
-    const y = yPos.valueOf();
-    const z = zPos.valueOf();
-    return { x, y, z };
-  }
+export function pos(chunk: Chunk): Pos {
+  const { xPos, yPos, zPos } = chunk.data;
+  const x = xPos.valueOf();
+  const y = yPos.valueOf();
+  const z = zPos.valueOf();
+  return { x, y, z };
 }
 
 export interface Header {
@@ -50,7 +41,7 @@ export interface Header {
 export async function readChunk(chunk: Uint8Array): Promise<Chunk> {
   const { byteLength, compression } = readHeader(chunk);
   const data = chunk.subarray(HEADER_LENGTH,HEADER_LENGTH + byteLength);
-  return new Chunk(await readNBT(data,{ endian: "big", compression, name: true, bedrockLevel: false }));
+  return readNBT(data,{ endian: "big", compression, name: true, bedrockLevel: false });
 }
 
 export function readHeader(chunk: Uint8Array): Header {

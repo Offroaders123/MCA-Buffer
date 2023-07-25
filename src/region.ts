@@ -1,5 +1,5 @@
 import { readLocations } from "./location.js";
-import { readChunk } from "./chunk.js";
+import { readChunk, pos } from "./chunk.js";
 
 import type { Location } from "./location.js";
 import type { Chunk, Pos } from "./chunk.js";
@@ -12,7 +12,7 @@ export class Region {
   } | undefined;
 
   set(chunk: Chunk): void {
-    const { x, y, z } = chunk.pos();
+    const { x, y, z } = pos(chunk);
     if (this[x] === undefined) this[x] = {};
     if (this[x]![y] === undefined) this[x]![y] = {};
     this[x]![y]![z] = chunk;
