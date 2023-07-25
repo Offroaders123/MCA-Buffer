@@ -2,22 +2,38 @@ import { readLocations } from "./location.js";
 import { readChunk } from "./chunk.js";
 
 import type { Location } from "./location.js";
-import type { Chunk } from "./chunk.js";
+import type { Chunk, Pos } from "./chunk.js";
 
-export type Region = Record<number,Record<number,Record<number,Chunk>>>;
+export class Region {
+  [x: number]: {
+    [y: number]: {
+      [z: number]: Chunk | undefined;
+    } | undefined;
+  } | undefined;
+
+  set(chunk: Chunk): void {
+    const { x, y, z } = chunk.pos();
+    if (this[x] === undefined) this[x] = {};
+    if (this[x]![y] === undefined) this[x]![y] = {};
+    this[x]![y]![z] = chunk;
+  }
+
+  get(pos: Pos): Chunk | null;
+  get({ x, y, z }: Pos): Chunk | null {
+    const chunk = this[x]?.[y]?.[z] ?? null;
+    return chunk;
+  }
+}
 
 export async function readRegion(region: Uint8Array): Promise<Region> {
   const locations = readLocations(region);
-  const chunks: Region = {};
+  const chunks = new Region();
 
   await Promise.all(locations.map(async location => {
     const data = readChunkLocation(region,location);
     if (data === null) return;
     const chunk = await readChunk(data);
-    const { x, y, z } = chunk.getPos();
-    if (chunks[x] === undefined) chunks[x] = {};
-    if (chunks[x][y] === undefined) chunks[x][y] = {};
-    chunks[x][y][z] = chunk;
+    chunks.set(chunk);
   }));
 
   return chunks;

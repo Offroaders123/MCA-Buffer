@@ -21,6 +21,8 @@ export interface Format extends FormatOptions {
   bedrockLevel: null;
 }
 
+export interface Pos { x: number; y: number; z: number; }
+
 export class Chunk extends NBTData<ChunkData> implements Format {
   override readonly name = "";
   override readonly endian = "big";
@@ -31,7 +33,7 @@ export class Chunk extends NBTData<ChunkData> implements Format {
     super(data);
   }
 
-  getPos(): { x: number; y: number; z: number; } {
+  pos(): Pos {
     const { xPos, yPos, zPos } = this.data;
     const x = xPos.valueOf();
     const y = yPos.valueOf();
