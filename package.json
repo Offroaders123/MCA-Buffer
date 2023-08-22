@@ -7,13 +7,13 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json",
-    "dev": "tsc -w"
+    "dev": "tsc --watch"
   },
   "dependencies": {
-    "nbtify": "^1.63.0"
+    "nbtify": "^1.68.0"
   },
   "devDependencies": {
-    "@types/node": "^20.4.2",
+    "@types/node": "^20.5.1",
     "typescript": "^5.1.6"
   }
 }
