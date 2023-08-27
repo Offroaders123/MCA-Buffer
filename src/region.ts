@@ -34,6 +34,7 @@ export async function readRegion(region: Uint8Array): Promise<Region> {
     if (data === null) return;
     const chunk = await readChunk(data);
     chunks.set(chunk);
+    console.log(chunk.data.structures);
   }));
 
   return chunks;
