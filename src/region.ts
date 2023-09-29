@@ -35,6 +35,7 @@ export async function readRegion(region: Uint8Array): Promise<Region> {
     const chunk = await readChunk(data);
     chunks.set(chunk);
     // console.log(chunk.data.structures);
+    // @ts-expect-error - indexing
     console.log(chunk.data.sections.map(section => section.biomes));
   }));
 

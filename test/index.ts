@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { readFile } from "node:fs/promises";
 import { readRegion, readLocations, readChunkLocation, writeChunk } from "../src/index.js";
 
