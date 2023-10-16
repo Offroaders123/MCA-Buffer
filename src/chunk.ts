@@ -1,12 +1,15 @@
-import { read as readNBT, write as writeNBT, NBTData } from "nbtify";
+import { read } from "nbtify";
 
-import type { IntTag, CompoundTag, FormatOptions } from "nbtify";
+import type { IntTag, CompoundTag, NBTData, FormatOptions } from "nbtify";
+import type { Region, Entry } from "./region.js";
 
 export const HEADER_LENGTH = 5;
 export const SCHEME_LENGTH = 1;
 
 export type Compression = "gzip" | "deflate" | null;
 export type CompressionScheme = 1 | 2 | 3;
+
+/* These types should eventually be derived from Region-Types. */
 
 export interface ChunkData extends CompoundTag {
   xPos: IntTag;
@@ -28,32 +31,20 @@ export interface Header {
   compression: Compression;
 }
 
-export async function readEntries2(region: Uint8Array): Promise<Region> {
-  const locations: Location[] = [...readLocations(region)];
-  const chunks = new Region();
-
-  await Promise.all(locations.map(async location => {
-    const data = readChunkLocation(region,location);
-    if (data === null) return;
-    const chunk = await readChunk(data);
-    chunks.set(chunk);
-  }));
-
-  return chunks;
+export async function readChunks(region: Region): Promise<(Chunk | null)[]> {
+  return Promise.all(region.map(readEntry));
 }
 
-export async function readChunk(chunk: Uint8Array): Promise<Chunk> {
-  const { byteLength, compression } = readHeader(chunk);
-  const data = chunk.subarray(HEADER_LENGTH,HEADER_LENGTH + byteLength);
-  return readNBT(data,{ endian: "big", compression, name: true, bedrockLevel: false });
-}
+export async function readEntry(entry: Entry): Promise<(Chunk | null)> {
+  if (entry === null || entry.byteLength < HEADER_LENGTH) return null;
 
-export function readHeader(chunk: Uint8Array): Header {
-  const view = new DataView(chunk.buffer,chunk.byteOffset,chunk.byteLength);
+  const view = new DataView(entry.buffer,entry.byteOffset,HEADER_LENGTH);
   const byteLength = view.getUint32(0) - SCHEME_LENGTH;
   const scheme = view.getUint8(4) as CompressionScheme;
   const compression = readCompression(scheme);
-  return { byteLength, compression };
+
+  const data = entry.subarray(HEADER_LENGTH,HEADER_LENGTH + byteLength);
+  return read(data,{ endian: "big", compression, name: true, bedrockLevel: false });
 }
 
 export function readCompression(scheme: CompressionScheme): Compression {
@@ -62,32 +53,5 @@ export function readCompression(scheme: CompressionScheme): Compression {
     case 2: return "deflate";
     case 3: return null;
     default: throw new TypeError(`Encountered unsupported compression scheme '${scheme}', must be a valid compression type`);
-  }
-}
-
-export async function writeChunk(chunk: Chunk): Promise<Uint8Array> {
-  let data = await writeNBT(chunk);
-  const { byteLength } = data;
-  const { compression } = chunk;
-  data = writeHeader(data,{ byteLength, compression });
-  return data;
-}
-
-export function writeHeader(chunk: Uint8Array, { byteLength, compression }: Header): Uint8Array {
-  const view = new DataView(chunk.buffer,chunk.byteOffset,chunk.byteLength);
-  const scheme = writeCompression(compression);
-  const data = new Uint8Array(HEADER_LENGTH + byteLength);
-  view.setUint32(0,byteLength + SCHEME_LENGTH);
-  view.setUint8(4,scheme);
-  data.set(chunk,HEADER_LENGTH);
-  return data;
-}
-
-export function writeCompression(compression: Compression): CompressionScheme {
-  switch (compression){
-    case "gzip": return 1;
-    case "deflate": return 2;
-    case null: return 3;
-    default: throw new TypeError(`Encountered unsupported compression type '${compression}', must be a valid compression scheme`);
   }
 }
