@@ -10,7 +10,7 @@ export type Entry = Uint8Array | null;
 
 export function* readEntries(region: Uint8Array): Generator<Entry,void,void> {
   for (const { byteOffset, byteLength } of readLocations(region)){
-    yield byteOffset !== 0 ? region.subarray(byteOffset,byteOffset + byteLength) : null;
+    yield byteLength !== 0 ? region.subarray(byteOffset,byteOffset + byteLength) : null;
   }
 }
 
@@ -46,9 +46,4 @@ export function* readTimestamps(region: Uint8Array): Generator<Timestamp,void,vo
   for (let i = TIMESTAMPS_OFFSET; i < TIMESTAMPS_OFFSET + TIMESTAMPS_LENGTH; i += TIMESTAMP_LENGTH){
     yield view.getUint32(i);
   }
-}
-
-export function readChunkLocation(region: Uint8Array, { byteOffset, byteLength }: Location): Uint8Array | null {
-  if (byteLength === 0) return null;
-  return region.subarray(byteOffset,byteOffset + byteLength);
 }
