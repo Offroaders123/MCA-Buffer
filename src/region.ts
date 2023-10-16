@@ -1,40 +1,17 @@
-import { readChunk, pos } from "./chunk.js";
-
-import type { Chunk, Pos } from "./chunk.js";
-
-export class Region {
-  [x: number]: {
-    [y: number]: {
-      [z: number]: Chunk | undefined;
-    } | undefined;
-  } | undefined;
-
-  set(chunk: Chunk): void {
-    const { x, y, z } = pos(chunk);
-    if (this[x] === undefined) this[x] = {};
-    if (this[x]![y] === undefined) this[x]![y] = {};
-    this[x]![y]![z] = chunk;
-  }
-
-  get(pos: Pos): Chunk | null;
-  get({ x, y, z }: Pos): Chunk | null {
-    const chunk = this[x]?.[y]?.[z] ?? null;
-    return chunk;
-  }
+export interface Region extends ReadonlyArray<Entry> {
+  [index: number]: Entry;
 }
 
-export async function readRegion(region: Uint8Array): Promise<Region> {
-  const locations: Location[] = [...readLocations(region)];
-  const chunks = new Region();
+export function readRegion(region: Uint8Array): Region {
+  return Object.seal([...readEntries(region)]);
+}
 
-  await Promise.all(locations.map(async location => {
-    const data = readChunkLocation(region,location);
-    if (data === null) return;
-    const chunk = await readChunk(data);
-    chunks.set(chunk);
-  }));
+export type Entry = Uint8Array | null;
 
-  return chunks;
+export function* readEntries(region: Uint8Array): Generator<Entry,void,void> {
+  for (const { byteOffset, byteLength } of readLocations(region)){
+    yield byteOffset !== 0 ? region.subarray(byteOffset,byteOffset + byteLength) : null;
+  }
 }
 
 export const LOCATION_LENGTH = 4;

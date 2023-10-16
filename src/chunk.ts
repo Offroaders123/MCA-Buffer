@@ -21,21 +21,25 @@ export interface Format extends FormatOptions {
   bedrockLevel: null;
 }
 
-export interface Pos { x: number; y: number; z: number; }
-
 export type Chunk = NBTData<ChunkData,Format>;
-
-export function pos(chunk: Chunk): Pos {
-  const { xPos, yPos, zPos } = chunk.data;
-  const x = xPos.valueOf();
-  const y = yPos.valueOf();
-  const z = zPos.valueOf();
-  return { x, y, z };
-}
 
 export interface Header {
   byteLength: number;
   compression: Compression;
+}
+
+export async function readEntries2(region: Uint8Array): Promise<Region> {
+  const locations: Location[] = [...readLocations(region)];
+  const chunks = new Region();
+
+  await Promise.all(locations.map(async location => {
+    const data = readChunkLocation(region,location);
+    if (data === null) return;
+    const chunk = await readChunk(data);
+    chunks.set(chunk);
+  }));
+
+  return chunks;
 }
 
 export async function readChunk(chunk: Uint8Array): Promise<Chunk> {
