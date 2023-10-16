@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { readRegion, readChunks } from "../src/index.js";
+import { readRegion, readEntry } from "../src/index.js";
 
 const REGION = new URL("./r.2.1.mca",import.meta.url);
 
@@ -9,5 +9,6 @@ const region = readRegion(data);
 // console.log(region);
 // console.log(region.length);
 
-const chunks = await readChunks(region);
-console.log(chunks);
+const chunk = await readEntry(region[140]!);
+console.log(chunk);
+// chunks.find(chunk => chunk?.data?.structures?.starts?.["minecraft:mineshaft"] !== undefined)
