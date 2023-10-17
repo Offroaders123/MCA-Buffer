@@ -8,24 +8,21 @@ export function readRegion(region: Uint8Array): Region {
   return Object.seal([...readEntries(region)]);
 }
 
-export const LOCATION_LENGTH = 4;
-export const LOCATIONS_LENGTH = 4096;
 export const LOCATIONS_OFFSET = 0;
+export const LOCATIONS_LENGTH = 4096;
+export const LOCATION_LENGTH = 4;
 
-export const TIMESTAMP_LENGTH = 4;
-export const TIMESTAMPS_LENGTH = 4096;
 export const TIMESTAMPS_OFFSET = LOCATIONS_LENGTH;
+export const TIMESTAMPS_LENGTH = 4096;
+export const TIMESTAMP_LENGTH = 4;
 
-export const HEADER_LENGTH = 5;
-export const SCHEME_LENGTH = 1;
+export const ENTRY_HEADER_LENGTH = 5;
 
 export interface Entry {
   data: Uint8Array;
   timestamp: number;
   compression: Compression;
 }
-
-export type CompressionScheme = 1 | 2 | 3;
 
 export function* readEntries(region: Uint8Array): Generator<Entry | null,void,void> {
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
@@ -41,13 +38,15 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null,void,vo
 
     byteLength = view.getUint32(byteOffset);
     const compression = readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme);
+    byteOffset += ENTRY_HEADER_LENGTH;
 
-    byteOffset += HEADER_LENGTH;
-    const data: Uint8Array = region.subarray(byteOffset,byteOffset + byteLength);
+    const data = region.subarray(byteOffset,byteOffset + byteLength);
 
     yield { data, timestamp, compression };
   }
 }
+
+type CompressionScheme = 1 | 2 | 3;
 
 function readCompressionScheme(scheme: CompressionScheme): Compression {
   switch (scheme){
