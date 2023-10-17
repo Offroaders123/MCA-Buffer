@@ -1,3 +1,5 @@
+import type { Compression } from "nbtify";
+
 export interface Region extends ReadonlyArray<Entry> {
   [index: number]: Entry;
 }
@@ -6,44 +8,53 @@ export function readRegion(region: Uint8Array): Region {
   return Object.seal([...readEntries(region)]);
 }
 
-export type Entry = Uint8Array | null;
-
-export function* readEntries(region: Uint8Array): Generator<Entry,void,void> {
-  for (const { byteOffset, byteLength } of readLocations(region)){
-    yield byteLength !== 0 ? region.subarray(byteOffset,byteOffset + byteLength) : null;
-  }
-}
-
 export const LOCATION_LENGTH = 4;
 export const LOCATIONS_LENGTH = 4096;
 export const LOCATIONS_OFFSET = 0;
-
-export interface Location {
-  byteOffset: number;
-  byteLength: number;
-}
-
-export function* readLocations(region: Uint8Array): Generator<Location,void,void> {
-  const view = new DataView(region.buffer,region.byteOffset,LOCATIONS_LENGTH);
-
-  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
-    const byteOffset = (view.getUint32(i) >> 8) * LOCATIONS_LENGTH;
-    const byteLength = view.getUint8(i + 3) * LOCATIONS_LENGTH;
-
-    yield { byteOffset, byteLength };
-  }
-}
 
 export const TIMESTAMP_LENGTH = 4;
 export const TIMESTAMPS_LENGTH = 4096;
 export const TIMESTAMPS_OFFSET = LOCATIONS_LENGTH;
 
-export type Timestamp = number;
+export const HEADER_LENGTH = 5;
+export const SCHEME_LENGTH = 1;
 
-export function* readTimestamps(region: Uint8Array): Generator<Timestamp,void,void> {
-  const view = new DataView(region.buffer,region.byteOffset,TIMESTAMPS_LENGTH);
+export interface Entry {
+  data: Uint8Array | null;
+  timestamp: number;
+  compression: Compression;
+}
 
-  for (let i = TIMESTAMPS_OFFSET; i < TIMESTAMPS_OFFSET + TIMESTAMPS_LENGTH; i += TIMESTAMP_LENGTH){
-    yield view.getUint32(i);
+export type CompressionScheme = 1 | 2 | 3;
+
+export function* readEntries(region: Uint8Array): Generator<Entry,void,void> {
+  const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
+
+  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
+    const byteOffset = (view.getUint32(i) >> 8) * LOCATIONS_LENGTH;
+    const byteLength = view.getUint8(i + 3) * LOCATIONS_LENGTH;
+    const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
+    // console.log(byteOffset,byteLength,timestamp);
+
+    const entry = byteLength !== 0 ? region.subarray(byteOffset,byteOffset + byteLength) : null;
+    let data: Entry["data"] = null;
+    let compression: Entry["compression"] = null;
+    if (entry !== null && entry.byteLength > HEADER_LENGTH){
+      const view = new DataView(entry.buffer,entry.byteOffset,entry.byteLength);
+      const byteLength = view.getUint32(0) - SCHEME_LENGTH;
+      compression = readCompressionScheme(view.getUint8(4) as CompressionScheme);
+      data = entry.subarray(HEADER_LENGTH,HEADER_LENGTH + byteLength);
+    }
+
+    yield { data, timestamp, compression };
+  }
+}
+
+function readCompressionScheme(scheme: CompressionScheme): Compression {
+  switch (scheme){
+    case 1: return "gzip";
+    case 2: return "deflate";
+    case 3: return null;
+    default: throw new TypeError(`Encountered unsupported compression scheme '${scheme}', must be a valid compression type`);
   }
 }

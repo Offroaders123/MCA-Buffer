@@ -11,4 +11,3 @@ const region = readRegion(data);
 
 const chunk = await readEntry(region[140]!);
 console.log(chunk);
-// chunks.find(chunk => chunk?.data?.structures?.starts?.["minecraft:mineshaft"] !== undefined)
