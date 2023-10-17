@@ -31,17 +31,19 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null,void,vo
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
-    const byteOffset = (view.getUint32(i) >> 8) * LOCATIONS_LENGTH;
-    const byteLength = view.getUint8(i + 3) * LOCATIONS_LENGTH;
+    let byteOffset = (view.getUint32(i) >> 8) * LOCATIONS_LENGTH;
+    let byteLength = view.getUint8(i + 3) * LOCATIONS_LENGTH;
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
-    // console.log(byteOffset,byteLength,timestamp);
 
-    if (byteLength < HEADER_LENGTH){
+    if (byteLength === 0){
       yield null; continue;
     }
 
-    const data: Uint8Array = region.subarray(byteOffset + HEADER_LENGTH,byteOffset + byteLength - HEADER_LENGTH);
+    byteLength = view.getUint32(byteOffset);
     const compression = readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme);
+
+    byteOffset += HEADER_LENGTH;
+    const data: Uint8Array = region.subarray(byteOffset,byteOffset + byteLength);
 
     yield { data, timestamp, compression };
   }
