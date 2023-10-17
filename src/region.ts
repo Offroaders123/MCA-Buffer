@@ -36,15 +36,8 @@ export function* readEntries(region: Uint8Array): Generator<Entry,void,void> {
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
     // console.log(byteOffset,byteLength,timestamp);
 
-    const entry = byteLength !== 0 ? region.subarray(byteOffset,byteOffset + byteLength) : null;
-    let data: Entry["data"] = null;
-    let compression: Entry["compression"] = null;
-    if (entry !== null && entry.byteLength > HEADER_LENGTH){
-      const view = new DataView(entry.buffer,entry.byteOffset,entry.byteLength);
-      const byteLength = view.getUint32(0) - SCHEME_LENGTH;
-      compression = readCompressionScheme(view.getUint8(4) as CompressionScheme);
-      data = entry.subarray(HEADER_LENGTH,HEADER_LENGTH + byteLength);
-    }
+    const data: Uint8Array | null = byteLength > HEADER_LENGTH ? region.subarray(byteOffset + HEADER_LENGTH,byteOffset + byteLength - HEADER_LENGTH) : null;
+    const compression: Compression = data !== null ? readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme) : null;
 
     yield { data, timestamp, compression };
   }
