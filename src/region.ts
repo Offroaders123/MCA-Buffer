@@ -1,7 +1,7 @@
 import type { Compression } from "nbtify";
 
-export interface Region extends ReadonlyArray<Entry> {
-  [index: number]: Entry;
+export interface Region extends ReadonlyArray<Entry | null> {
+  [index: number]: Entry | null;
 }
 
 export function readRegion(region: Uint8Array): Region {
@@ -20,14 +20,14 @@ export const HEADER_LENGTH = 5;
 export const SCHEME_LENGTH = 1;
 
 export interface Entry {
-  data: Uint8Array | null;
+  data: Uint8Array;
   timestamp: number;
   compression: Compression;
 }
 
 export type CompressionScheme = 1 | 2 | 3;
 
-export function* readEntries(region: Uint8Array): Generator<Entry,void,void> {
+export function* readEntries(region: Uint8Array): Generator<Entry | null,void,void> {
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
@@ -39,7 +39,7 @@ export function* readEntries(region: Uint8Array): Generator<Entry,void,void> {
     const data: Uint8Array | null = byteLength > HEADER_LENGTH ? region.subarray(byteOffset + HEADER_LENGTH,byteOffset + byteLength - HEADER_LENGTH) : null;
     const compression: Compression = data !== null ? readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme) : null;
 
-    yield { data, timestamp, compression };
+    yield data !== null ? { data, timestamp, compression } : null;
   }
 }
 

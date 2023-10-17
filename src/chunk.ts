@@ -17,7 +17,8 @@ export async function readChunks(region: Region): Promise<(Chunk | null)[]> {
   return Promise.all(region.map(readEntry));
 }
 
-export async function readEntry({ data, compression }: Entry): Promise<Chunk | null> {
-  if (data === null) return null;
+export async function readEntry(entry: Entry | null): Promise<Chunk | null> {
+  if (entry === null) return null;
+  const { data, compression } = entry;
   return read(data,{ endian: "big", compression, name: true, bedrockLevel: false });
 }
