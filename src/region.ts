@@ -36,10 +36,14 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null,void,vo
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
     // console.log(byteOffset,byteLength,timestamp);
 
-    const data: Uint8Array | null = byteLength > HEADER_LENGTH ? region.subarray(byteOffset + HEADER_LENGTH,byteOffset + byteLength - HEADER_LENGTH) : null;
-    const compression: Compression = data !== null ? readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme) : null;
+    if (byteLength < HEADER_LENGTH){
+      yield null; continue;
+    }
 
-    yield data !== null ? { data, timestamp, compression } : null;
+    const data: Uint8Array = region.subarray(byteOffset + HEADER_LENGTH,byteOffset + byteLength - HEADER_LENGTH);
+    const compression = readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme);
+
+    yield { data, timestamp, compression };
   }
 }
 
