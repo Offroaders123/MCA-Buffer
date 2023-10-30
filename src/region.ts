@@ -14,10 +14,15 @@ export function writeRegion(region: Region) {
 
     const byteLength = Math.ceil((entry.data.byteLength) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
     const data = new Uint8Array(byteLength);
-    data.set(entry.data,0);
+    data.set(entry.data,ENTRY_HEADER_LENGTH);
 
     return { ...entry, data };
   });
+
+  const byteLength: number = region
+    .map(entry => entry?.data.byteLength ?? 0)
+    .reduce((entry,byteLength) => byteLength + entry,LOCATIONS_LENGTH + TIMESTAMPS_LENGTH);
+  console.log(byteLength);
 
   return region;
 }
