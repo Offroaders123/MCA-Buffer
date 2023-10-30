@@ -8,6 +8,8 @@ export function readRegion(region: Uint8Array): Region {
   return Object.seal([...readEntries(region)]);
 }
 
+export function writeRegion(region: Region): Uint8Array {}
+
 export const LOCATIONS_OFFSET = 0;
 export const LOCATIONS_LENGTH = 4096;
 export const LOCATION_LENGTH = 4;
@@ -54,5 +56,14 @@ function readCompressionScheme(scheme: CompressionScheme): Compression {
     case 2: return "deflate";
     case 3: return null;
     default: throw new TypeError(`Encountered unsupported compression scheme '${scheme}', must be a valid compression type`);
+  }
+}
+
+function writeCompressionScheme(format: Compression): CompressionScheme {
+  switch (format){
+    case "gzip": return 1;
+    case "deflate": return 2;
+    case null: return 3;
+    default: throw new TypeError(`Encountered unsupported compression format '${format}', must be a valid compression type`);
   }
 }
