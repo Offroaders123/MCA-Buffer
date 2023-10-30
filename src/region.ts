@@ -9,10 +9,17 @@ export function readRegion(region: Uint8Array): Region {
 }
 
 export function writeRegion(region: Region): Uint8Array {
-  for (const [i,entry] of region.entries()){
-    const byteLength: number = entry === null ? 0 : entry.data.byteLength;
+  const offsets: number[] = Array(region.length);
+  const lengths: number[] = Array(region.length);
 
-    if (i === 17) console.log(byteLength);
+  for (const [i,entry] of region.entries()){
+    const byteOffset: number = (offsets[i - 1] ?? 0) + LOCATIONS_LENGTH;
+    const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
+
+    offsets[i] = byteOffset;
+    lengths[i] = byteLength;
+
+    if (i === 17) console.log(byteOffset,byteLength),console.log(offsets);
   }
 }
 
@@ -38,7 +45,7 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null,void,vo
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
     let byteOffset = (view.getUint32(i) >> 8) * LOCATIONS_LENGTH;
     let byteLength = view.getUint8(i + 3) * LOCATIONS_LENGTH;
-    if (i / LOCATION_LENGTH === 17) console.log(byteLength);
+    if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
 
     if (byteLength === 0){
