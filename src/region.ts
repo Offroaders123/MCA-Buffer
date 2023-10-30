@@ -12,12 +12,18 @@ export function writeRegion(region: Region) {
   const byteOffset: number[] = [];
   const byteLength: number[] = [];
   const timestamp: number[] = [];
+  let fullLength: number = LOCATIONS_LENGTH + TIMESTAMPS_LENGTH;
 
   for (const [i,entry] of region.entries()){
-    byteOffset[i] = NaN;
-    byteLength[i] = entry?.data.byteLength ?? 0;
+    byteLength[i] = Math.ceil((entry?.data.byteLength ?? 0) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
     timestamp[i] = entry?.timestamp ?? 0;
   }
+
+  for (const [i,entry] of region.entries()){
+    byteOffset[i] = LOCATIONS_LENGTH + TIMESTAMPS_LENGTH + byteLength[i]!; // this appears to be incorrect
+    fullLength += byteLength[i]!; // this one is right though!
+  }
+  console.log(fullLength);
 
   return { byteOffset, byteLength, timestamp };
 }
@@ -56,8 +62,6 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null,void,vo
     byteOffset += ENTRY_HEADER_LENGTH;
 
     const data = region.subarray(byteOffset,byteOffset + byteLength);
-
-    if (i / LOCATION_LENGTH === 17) console.log(byteLength);
 
     yield { data, timestamp, compression };
   }
