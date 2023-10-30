@@ -9,23 +9,17 @@ export function readRegion(region: Uint8Array): Region {
 }
 
 export function writeRegion(region: Region) {
-  const byteOffset: number[] = [];
-  const byteLength: number[] = [];
-  const timestamp: number[] = [];
-  let fullLength: number = LOCATIONS_LENGTH + TIMESTAMPS_LENGTH;
+  region = region.map(entry => {
+    if (entry === null) return null;
 
-  for (const [i,entry] of region.entries()){
-    byteLength[i] = Math.ceil((entry?.data.byteLength ?? 0) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
-    timestamp[i] = entry?.timestamp ?? 0;
-  }
+    const byteLength = Math.ceil((entry.data.byteLength) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
+    const data = new Uint8Array(byteLength);
+    data.set(entry.data,0);
 
-  for (const [i,entry] of region.entries()){
-    byteOffset[i] = LOCATIONS_LENGTH + TIMESTAMPS_LENGTH + byteLength[i]!; // this appears to be incorrect
-    fullLength += byteLength[i]!; // this one is right though!
-  }
-  console.log(fullLength);
+    return { ...entry, data };
+  });
 
-  return { byteOffset, byteLength, timestamp };
+  return region;
 }
 
 export const LOCATIONS_OFFSET = 0;

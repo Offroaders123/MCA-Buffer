@@ -20,5 +20,6 @@ const recompile = (await writeChunks(chunks))
 console.log(recompile.at(17));
 // console.log(recompile.length);
 
-const rebundle = writeRegion(recompile);
-console.log(rebundle.byteOffset.at(17),rebundle.byteLength.at(17));
+const rebundle = writeRegion(recompile)
+  .map(entry => entry === null ? entry : { ...entry, data: Buffer.from(entry.data) });
+console.log(rebundle.at(17));
