@@ -8,43 +8,21 @@ export function readRegion(region: Uint8Array): Region {
   return Object.seal([...readEntries(region)]);
 }
 
-export function writeRegion(region: Region) {
-  const entries = region.map(entry => {
-    if (entry === null) return { data: new Uint8Array(0), timestamp: 0, compression: null };
-
-    const byteLength = Math.ceil((entry.data.byteLength + ENTRY_HEADER_LENGTH) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
-    const data = new Uint8Array(byteLength);
-    data.set(entry.data,ENTRY_HEADER_LENGTH);
-
-    return { ...entry, data };
-  });
-
-  const entryLengths: number[] = entries
-    .map(entry => entry.data.byteLength);
-  // console.log(entryLengths);
-
-  const entryOffsets: number[] = entryLengths
-    .map(byteLength => byteLength === 0 ? 0 : LOCATIONS_OFFSET + LOCATIONS_LENGTH + TIMESTAMPS_LENGTH + byteLength);
-  for (const [i,byteOffset] of entryOffsets.entries()){
-    if (byteOffset !== 0) entryOffsets[i] = (entryOffsets[i - 1] ?? 0) + byteOffset;
-  }
-  // console.log(entryOffsets);
-
-  const regionLength: number = entryLengths
-    .reduce((entry,byteLength) => byteLength + entry,LOCATIONS_LENGTH + TIMESTAMPS_LENGTH);
-  console.log(regionLength);
+export function writeRegion(region: Region): Uint8Array {
+  const regionLength: number = region
+    .map(entry => Math.ceil((entry?.data.byteLength ?? 0) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH)
+    .reduce((previous,current) => previous + current,LOCATIONS_OFFSET + LOCATIONS_LENGTH + TIMESTAMPS_LENGTH);
 
   const data = new Uint8Array(regionLength);
-  const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
+  const view = new DataView(data.buffer);
 
-  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
-    const byteOffset: number = entryOffsets[i] ?? 0;
-    const byteLength: number = entryLengths[i / LOCATION_LENGTH]!;
-    if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
-    // view.setUint32();
+  for (const [i,entry] of region.entries()){
+    const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / LOCATIONS_LENGTH);
+    if (i / LOCATION_LENGTH === 17) console.log(byteLength * LOCATIONS_LENGTH);
+    view.setUint8(i * LOCATION_LENGTH + 3,byteLength);
   }
 
-  return entries;
+  return data;
 }
 
 export const LOCATIONS_OFFSET = 0;
