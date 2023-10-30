@@ -8,7 +8,7 @@ console.log(data);
 console.log(data.byteLength);
 
 const region = readRegion(data);
-console.log(region.at(17));
+// console.log(region.at(17));
 // console.log(region.length);
 
 const chunks = await readChunks(region);
@@ -17,8 +17,9 @@ const chunks = await readChunks(region);
 
 const recompile = (await writeChunks(chunks))
   .map(entry => entry === null ? entry : { ...entry, data: Buffer.from(entry.data) });
-console.log(recompile.at(17));
+// console.log(recompile.at(17));
 // console.log(recompile.length);
 
-const rebundle = writeRegion(recompile);
-console.log(Buffer.from(rebundle.buffer));
+const rebundle = writeRegion(recompile)
+  .map(entry => entry === null ? entry : { ...entry, data: Buffer.from(entry.data) });
+console.log(rebundle.at(17));

@@ -9,18 +9,35 @@ export function readRegion(region: Uint8Array): Region {
 }
 
 export function writeRegion(region: Region) {
-  const entryLengths: number[] = region.map(entry => {
-    if (entry === null) return 0;
-    return Math.ceil((entry.data.byteLength + ENTRY_HEADER_LENGTH) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
+  const entries = region.map(entry => {
+    if (entry === null) return null;
+
+    const byteLength = Math.ceil((entry.data.byteLength + ENTRY_HEADER_LENGTH) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
+    const data = new Uint8Array(byteLength);
+    data.set(entry.data,ENTRY_HEADER_LENGTH);
+
+    return { ...entry, data };
   });
+
+  const entryLengths: number[] = entries
+    .map(entry => entry?.data.byteLength ?? 0);
+  // console.log(entryLengths);
 
   const regionLength: number = entryLengths
     .reduce((entry,byteLength) => byteLength + entry,LOCATIONS_LENGTH + TIMESTAMPS_LENGTH);
   console.log(regionLength);
 
   const data = new Uint8Array(regionLength);
+  const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
 
-  return data;
+  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
+    const byteOffset = NaN;
+    const byteLength = entryLengths[i / LOCATION_LENGTH]!;
+    if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
+    // view.setUint32();
+  }
+
+  return entries;
 }
 
 export const LOCATIONS_OFFSET = 0;
