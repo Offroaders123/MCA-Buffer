@@ -9,18 +9,12 @@ export function readRegion(region: Uint8Array): Region {
 }
 
 export function writeRegion(region: Region) {
-  region = region.map(entry => {
-    if (entry === null) return null;
-
-    const byteLength = Math.ceil((entry.data.byteLength) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
-    const data = new Uint8Array(byteLength);
-    data.set(entry.data,ENTRY_HEADER_LENGTH);
-
-    return { ...entry, data };
+  const entryLengths: number[] = region.map(entry => {
+    if (entry === null) return 0;
+    return Math.ceil((entry.data.byteLength + ENTRY_HEADER_LENGTH) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
   });
 
-  const byteLength: number = region
-    .map(entry => entry?.data.byteLength ?? 0)
+  const byteLength: number = entryLengths
     .reduce((entry,byteLength) => byteLength + entry,LOCATIONS_LENGTH + TIMESTAMPS_LENGTH);
   console.log(byteLength);
 
