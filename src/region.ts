@@ -23,10 +23,10 @@ export function writeRegion(region: Region) {
     .map(entry => entry?.data.byteLength ?? 0);
   // console.log(entryLengths);
 
-  const entryOffsets: [number,number][] = entryLengths
-    .map(byteLength => [byteLength,LOCATIONS_OFFSET + LOCATIONS_LENGTH + TIMESTAMPS_LENGTH + byteLength]);
-  for (const [i,[byteLength,offset]] of entryOffsets.entries()){
-    entryOffsets[i] = [byteLength,(entryOffsets[i - 1]?.[1] ?? 0) + offset];
+  const entryOffsets: number[] = entryLengths
+    .map(byteLength => byteLength === 0 ? 0 : LOCATIONS_OFFSET + LOCATIONS_LENGTH + TIMESTAMPS_LENGTH + byteLength);
+  for (const [i,byteOffset] of entryOffsets.entries()){
+    if (byteOffset !== 0) entryOffsets[i] = (entryOffsets[i - 1] ?? 0) + byteOffset;
   }
   console.log(entryOffsets);
 
@@ -38,7 +38,7 @@ export function writeRegion(region: Region) {
   const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
-    const byteOffset: number = entryOffsets[i]?.[1] ?? 0;
+    const byteOffset: number = entryOffsets[i] ?? 0;
     const byteLength: number = entryLengths[i / LOCATION_LENGTH]!;
     if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
     // view.setUint32();
