@@ -14,11 +14,13 @@ export function writeRegion(region: Region) {
     return Math.ceil((entry.data.byteLength + ENTRY_HEADER_LENGTH) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
   });
 
-  const byteLength: number = entryLengths
+  const regionLength: number = entryLengths
     .reduce((entry,byteLength) => byteLength + entry,LOCATIONS_LENGTH + TIMESTAMPS_LENGTH);
-  console.log(byteLength);
+  console.log(regionLength);
 
-  return region;
+  const data = new Uint8Array(regionLength);
+
+  return data;
 }
 
 export const LOCATIONS_OFFSET = 0;
