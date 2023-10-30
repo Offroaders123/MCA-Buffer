@@ -8,15 +8,18 @@ export function readRegion(region: Uint8Array): Region {
   return Object.seal([...readEntries(region)]);
 }
 
-export function writeRegion(region: Region): Uint8Array {
-  const data = region.map(entry => {
-    if (entry === null) return entry;
-    const { data, timestamp, compression } = entry;
-    const byteOffset: number = NaN; // placeholder
-    const byteLength: number = data.byteLength ?? 0;
-    return { byteOffset, byteLength, timestamp, compression };
-  });
-  return data;
+export function writeRegion(region: Region) {
+  const byteOffset: number[] = [];
+  const byteLength: number[] = [];
+  const timestamp: number[] = [];
+
+  for (const [i,entry] of region.entries()){
+    byteOffset[i] = NaN;
+    byteLength[i] = entry?.data.byteLength ?? 0;
+    timestamp[i] = entry?.timestamp ?? 0;
+  }
+
+  return { byteOffset, byteLength, timestamp };
 }
 
 export const LOCATIONS_OFFSET = 0;
