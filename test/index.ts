@@ -20,4 +20,4 @@ console.log(recompile.at(17));
 // console.log(recompile.length);
 
 const rebundle = writeRegion(recompile);
-// console.log(rebundle);
+console.log(rebundle.at(17));

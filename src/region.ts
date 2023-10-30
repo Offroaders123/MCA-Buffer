@@ -9,18 +9,14 @@ export function readRegion(region: Uint8Array): Region {
 }
 
 export function writeRegion(region: Region): Uint8Array {
-  const offsets: number[] = Array(region.length);
-  const lengths: number[] = Array(region.length);
-
-  for (const [i,entry] of region.entries()){
-    const byteOffset: number = (offsets[i - 1] ?? 0) + LOCATIONS_LENGTH;
-    const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH;
-
-    offsets[i] = byteOffset;
-    lengths[i] = byteLength;
-
-    if (i === 17) console.log(byteOffset,byteLength),console.log(offsets);
-  }
+  const data = region.map(entry => {
+    if (entry === null) return entry;
+    const { data, timestamp, compression } = entry;
+    const byteOffset: number = NaN; // placeholder
+    const byteLength: number = data.byteLength ?? 0;
+    return { byteOffset, byteLength, timestamp, compression };
+  });
+  return data;
 }
 
 export const LOCATIONS_OFFSET = 0;
@@ -52,7 +48,7 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null,void,vo
       yield null; continue;
     }
 
-    byteLength = view.getUint32(byteOffset);
+    byteLength = view.getUint32(byteOffset) - 1;
     const compression = readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme);
     byteOffset += ENTRY_HEADER_LENGTH;
 
