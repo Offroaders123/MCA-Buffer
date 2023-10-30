@@ -10,15 +10,15 @@ export function readRegion(region: Uint8Array): Region {
 
 export function writeRegion(region: Region): Uint8Array {
   const regionLength: number = region
-    .map(entry => Math.ceil((entry?.data.byteLength ?? 0) / LOCATIONS_LENGTH) * LOCATIONS_LENGTH)
+    .map(entry => Math.ceil((entry?.data.byteLength ?? 0) / ENTRY_LENGTH) * ENTRY_LENGTH)
     .reduce((previous,current) => previous + current,LOCATIONS_OFFSET + LOCATIONS_LENGTH + TIMESTAMPS_LENGTH);
 
   const data = new Uint8Array(regionLength);
   const view = new DataView(data.buffer);
 
   for (const [i,entry] of region.entries()){
-    const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / LOCATIONS_LENGTH);
-    if (i / LOCATION_LENGTH === 17) console.log(byteLength * LOCATIONS_LENGTH);
+    const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / ENTRY_LENGTH);
+    if (i === 17) console.log(byteLength * ENTRY_LENGTH);
     view.setUint8(i * LOCATION_LENGTH + 3,byteLength);
   }
 
@@ -33,6 +33,7 @@ export const TIMESTAMPS_OFFSET = LOCATIONS_LENGTH;
 export const TIMESTAMPS_LENGTH = 4096;
 export const TIMESTAMP_LENGTH = 4;
 
+export const ENTRY_LENGTH = 4096;
 export const ENTRY_HEADER_LENGTH = 5;
 
 export interface Entry {
@@ -44,9 +45,9 @@ export interface Entry {
 export function* readEntries(region: Uint8Array): Generator<Entry | null,void,void> {
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
 
-  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
-    let byteOffset = (view.getUint32(i) >> 8) * LOCATIONS_LENGTH;
-    let byteLength = view.getUint8(i + 3) * LOCATIONS_LENGTH;
+  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + ENTRY_LENGTH; i += LOCATION_LENGTH){
+    let byteOffset = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
+    let byteLength = view.getUint8(i + 3) * ENTRY_LENGTH;
     if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
 
