@@ -16,10 +16,17 @@ export function writeRegion(region: Region): Uint8Array {
   const data = new Uint8Array(regionLength);
   const view = new DataView(data.buffer);
 
+  let writePointer = LOCATIONS_OFFSET + LOCATIONS_LENGTH + TIMESTAMPS_LENGTH;
+
   for (const [i,entry] of region.entries()){
     const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / ENTRY_LENGTH);
-    if (i === 17) console.log(byteLength * ENTRY_LENGTH);
+    const byteOffset: number = writePointer;
+    view.setUint32(i * LOCATION_LENGTH,byteOffset);
     view.setUint8(i * LOCATION_LENGTH + 3,byteLength);
+
+    if (i === 17) console.log(byteOffset,byteLength * ENTRY_LENGTH);
+
+    writePointer += byteLength;
   }
 
   return data;
