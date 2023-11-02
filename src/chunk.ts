@@ -6,7 +6,7 @@ import type { Region, Entry } from "./region.js";
 /* These types should eventually be derived from Region-Types. */
 
 export class Chunk extends NBTData<ChunkData> {
-  constructor(data: NBTData<ChunkData>, public timestamp: number) {
+  constructor(data: NBTData<ChunkData>, public timestamp: number, public index?: number) {
     super(data);
   }
 }
@@ -23,9 +23,9 @@ export async function readChunks(region: Region): Promise<(Chunk | null)[]> {
 
 export async function readEntry(entry: Entry | null): Promise<Chunk | null> {
   if (entry === null) return null;
-  const { data, timestamp, compression } = entry;
+  const { data, timestamp, compression, index } = entry;
   const nbt: NBTData<ChunkData> = await read(data,{ endian: "big", compression, name: true, bedrockLevel: false });
-  return new Chunk(nbt,timestamp);
+  return new Chunk(nbt,timestamp,index);
 }
 
 export async function writeChunks(chunks: (Chunk | null)[]): Promise<Region> {
@@ -34,7 +34,7 @@ export async function writeChunks(chunks: (Chunk | null)[]): Promise<Region> {
 
 export async function writeEntry(chunk: Chunk | null): Promise<Entry | null> {
   if (chunk === null) return null;
-  const { data: nbt, timestamp, compression } = chunk;
+  const { data: nbt, timestamp, compression, index } = chunk;
   const data: Uint8Array = await write(nbt,{ name: "", endian: "big", compression, bedrockLevel: null });
-  return { data, timestamp, compression };
+  return { data, timestamp, compression, index };
 }
