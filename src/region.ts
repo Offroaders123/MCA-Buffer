@@ -6,7 +6,15 @@ export interface Region extends ReadonlyArray<Entry | null> {
 
 export function readRegion(region: Uint8Array): Region {
   const entries = [...readEntries(region)];
-  entries.sort((a,b) => (a?.byteOffset ?? 0) - (b?.byteOffset ?? 0));
+  // entries.sort((a,b) => (a?.byteOffset ?? 0) - (b?.byteOffset ?? 0));
+
+  const editIndicies = [...entries]
+    .sort((a,b) => (a?.byteOffset ?? 0) - (b?.byteOffset ?? 0));
+
+  for (const [i,entry] of editIndicies.entries()){
+    if (entry === null) continue;
+    entry.index = i;
+  }
 
   return Object.seal(entries);
 }
@@ -46,18 +54,12 @@ export const TIMESTAMP_LENGTH = 4;
 export const ENTRY_LENGTH = 4096;
 export const ENTRY_HEADER_LENGTH = 5;
 
-export type Entry = LoadedEntry | UnloadedEntry;
-
-export interface LoadedEntry {
-  loaded: true;
+export interface Entry {
   byteOffset: number;
   byteLength: number;
   timestamp: number;
   compression: Compression;
-}
-
-export interface UnloadedEntry {
-  loaded: false;
+  index?: number;
 }
 
 export function* readEntries(region: Uint8Array): Generator<Entry | null, void, void> {
@@ -70,14 +72,14 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null, void, 
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
 
     if (byteLength === 0){
-      yield { loaded: false }; continue;
+      yield null; continue;
     }
 
     byteLength = view.getUint32(byteOffset) - 1;
     const compression = readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme);
     byteOffset += ENTRY_HEADER_LENGTH;
 
-    yield { loaded: true, byteOffset, byteLength, timestamp, compression };
+    yield { byteOffset, byteLength, timestamp, compression };
   }
 }
 
