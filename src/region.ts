@@ -46,11 +46,18 @@ export const TIMESTAMP_LENGTH = 4;
 export const ENTRY_LENGTH = 4096;
 export const ENTRY_HEADER_LENGTH = 5;
 
-export interface Entry {
+export type Entry = LoadedEntry | UnloadedEntry;
+
+export interface LoadedEntry {
+  loaded: true;
   byteOffset: number;
   byteLength: number;
   timestamp: number;
   compression: Compression;
+}
+
+export interface UnloadedEntry {
+  loaded: false;
 }
 
 export function* readEntries(region: Uint8Array): Generator<Entry | null, void, void> {
@@ -63,14 +70,14 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null, void, 
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
 
     if (byteLength === 0){
-      yield { byteOffset, byteLength, timestamp, compression: null }; continue;
+      yield { loaded: false }; continue;
     }
 
     byteLength = view.getUint32(byteOffset) - 1;
     const compression = readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme);
     byteOffset += ENTRY_HEADER_LENGTH;
 
-    yield { byteOffset, byteLength, timestamp, compression };
+    yield { loaded: true, byteOffset, byteLength, timestamp, compression };
   }
 }
 
