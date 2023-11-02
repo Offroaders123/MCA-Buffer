@@ -6,7 +6,7 @@ export interface Region extends ReadonlyArray<Entry | null> {
 
 export function readRegion(region: Uint8Array): Region {
   const entries = [...readEntries(region)];
-  // entries.sort((a,b) => (a?.byteOffset ?? 0) - (b?.byteOffset ?? 0));
+  entries.sort((a,b) => (a?.byteOffset ?? 0) - (b?.byteOffset ?? 0));
 
   return Object.seal(entries);
 }

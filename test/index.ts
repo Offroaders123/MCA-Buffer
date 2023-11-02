@@ -8,7 +8,7 @@ const data = await readFile(REGION);
 // console.log(data.byteLength);
 
 const region = readRegion(data);
-console.log(region);
+console.log(...region);
 console.log(region.length);
 
 // const chunks = await readChunks(region);
