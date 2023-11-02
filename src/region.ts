@@ -5,7 +5,10 @@ export interface Region extends ReadonlyArray<Entry | null> {
 }
 
 export function readRegion(region: Uint8Array): Region {
-  return Object.seal([...readEntries(region)]);
+  const entries = [...readEntries(region)];
+  entries.sort((a,b) => (a?.byteOffset ?? 0) - (b?.byteOffset ?? 0));
+
+  return Object.seal(entries);
 }
 
 export function writeRegion(region: Region): Uint8Array {
@@ -44,18 +47,19 @@ export const ENTRY_LENGTH = 4096;
 export const ENTRY_HEADER_LENGTH = 5;
 
 export interface Entry {
-  data: Uint8Array;
+  byteOffset: number;
+  byteLength: number;
   timestamp: number;
   compression: Compression;
 }
 
-export function* readEntries(region: Uint8Array): Generator<Entry | null,void,void> {
+export function* readEntries(region: Uint8Array): Generator<Entry | null, void, void> {
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
 
-  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + ENTRY_LENGTH; i += LOCATION_LENGTH){
+  for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
     let byteOffset = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
     let byteLength = view.getUint8(i + 3) * ENTRY_LENGTH;
-    if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
+    // if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
 
     if (byteLength === 0){
@@ -66,9 +70,7 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null,void,vo
     const compression = readCompressionScheme(view.getUint8(byteOffset + 4) as CompressionScheme);
     byteOffset += ENTRY_HEADER_LENGTH;
 
-    const data = region.subarray(byteOffset,byteOffset + byteLength);
-
-    yield { data, timestamp, compression };
+    yield { byteOffset, byteLength, timestamp, compression };
   }
 }
 
