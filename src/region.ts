@@ -6,7 +6,7 @@ export interface Region extends ReadonlyArray<Entry | null> {
 
 export function readRegion(region: Uint8Array): Region {
   const entries = [...readEntries(region)];
-  entries.sort((a,b) => (a?.byteOffset ?? 0) - (b?.byteOffset ?? 0));
+  // entries.sort((a,b) => (a?.byteOffset ?? 0) - (b?.byteOffset ?? 0));
 
   return Object.seal(entries);
 }
@@ -63,7 +63,7 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null, void, 
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
 
     if (byteLength === 0){
-      yield null; continue;
+      yield { byteOffset, byteLength, timestamp, compression: null }; continue;
     }
 
     byteLength = view.getUint32(byteOffset) - 1;
