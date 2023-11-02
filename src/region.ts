@@ -30,6 +30,7 @@ export function writeRegion(region: Region): Uint8Array {
   let writePointer = LOCATIONS_OFFSET + LOCATIONS_LENGTH + TIMESTAMPS_LENGTH;
 
   for (const [i,entry] of region.entries()){
+    // console.log(i,entry?.index);
     const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / ENTRY_LENGTH);
     const byteOffset: number = writePointer;
     view.setUint32(i * LOCATION_LENGTH,byteOffset);
