@@ -29,16 +29,32 @@ export function writeRegion(region: Region): Uint8Array {
 
   let writePointer = LOCATIONS_OFFSET + LOCATIONS_LENGTH + TIMESTAMPS_LENGTH;
 
-  for (const [i,entry] of region.entries()){
+  const offsets = region
+    .map((entry,i) => {
+      if (entry === null) return { coordinate: i, index: 0 };
+      return { ...entry, coordinate: i };
+    })
+    .sort((previous,next) => (previous.index ?? 0) - (next.index ?? 0))
+    .map(entry => {
+      if (!("data" in entry)) return { ...entry, byteOffset: 0, byteLength: 0 };
+      const byteLength: number = Math.ceil(entry.data.byteLength / ENTRY_LENGTH);
+      const byteOffset: number = writePointer;
+      writePointer += byteLength;
+      return { ...entry, byteOffset, byteLength };
+    })
+    .sort((previous,next) => previous.coordinate - next.coordinate);
+  console.log(offsets);
+
+  for (const { coordinate: i, byteOffset, byteLength } of offsets){
     // console.log(i,entry?.index);
-    const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / ENTRY_LENGTH);
-    const byteOffset: number = writePointer;
+    // const byteLength: number = Math.ceil((entry?.data.byteLength ?? 0) / ENTRY_LENGTH);
+    // const byteOffset: number = offsets[i];
     view.setUint32(i * LOCATION_LENGTH,byteOffset);
     view.setUint8(i * LOCATION_LENGTH + 3,byteLength);
 
     if (i === 17) console.log(byteOffset,byteLength * ENTRY_LENGTH);
 
-    writePointer += byteLength;
+    // writePointer += byteLength;
   }
 
   return data;
