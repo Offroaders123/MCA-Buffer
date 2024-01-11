@@ -13,7 +13,7 @@ export function readRegion(region: Uint8Array): Region {
     const byteOffset = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
     const byteLength = view.getUint8(i + 3) * ENTRY_LENGTH;
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
-    const data: Uint8Array | null = byteLength !== 0 ? {} /*region.subarray(byteOffset + 5,byteOffset + byteLength)*/ : null;
+    const data: Uint8Array | null = byteLength !== 0 ? region.subarray(byteOffset + 5,byteOffset + byteLength) : null;
     entries[index] = { data, index, timestamp, byteOffset };
   }
 
