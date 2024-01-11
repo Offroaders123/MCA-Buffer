@@ -4,7 +4,7 @@ export interface Region extends ReadonlyArray<Entry> {
   [index: number]: Entry;
 }
 
-export async function readRegion(region: Uint8Array): Promise<Region> {
+export function readRegion(region: Uint8Array): Region {
   const entries: Region = Object.seal(Array.from<Region[number]>({ length: REGION_LENGTH }));
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
 
@@ -14,7 +14,7 @@ export async function readRegion(region: Uint8Array): Promise<Region> {
     const byteLength = view.getUint8(i + 3) * ENTRY_LENGTH;
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
     const data: Uint8Array | null = byteLength !== 0 ? {} /*region.subarray(byteOffset + 5,byteOffset + byteLength)*/ : null;
-    entries[i / LOCATION_LENGTH] = { data, index, timestamp, byteOffset };
+    entries[index] = { data, index, timestamp, byteOffset };
   }
 
   return entries;
