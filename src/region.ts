@@ -112,6 +112,7 @@ function readCompressionScheme(scheme: CompressionScheme): Compression {
   }
 }
 
+/*
 function writeCompressionScheme(format: Compression): CompressionScheme {
   switch (format){
     case "gzip": return 1;
@@ -120,3 +121,4 @@ function writeCompressionScheme(format: Compression): CompressionScheme {
     default: throw new TypeError(`Encountered unsupported compression format '${format}', must be a valid compression type`);
   }
 }
+*/

@@ -24,7 +24,7 @@ export async function readChunks(region: Region): Promise<(Chunk | null)[]> {
 export async function readEntry(entry: Entry | null): Promise<Chunk | null> {
   if (entry === null) return null;
   const { data, timestamp, compression, index } = entry;
-  const nbt: NBTData<ChunkData> = await read(data,{ endian: "big", compression, name: true, bedrockLevel: false });
+  const nbt: NBTData<ChunkData> = await read(data,{ endian: "big", compression, rootName: true, bedrockLevel: false });
   return new Chunk(nbt,timestamp,index);
 }
 
@@ -35,6 +35,6 @@ export async function writeChunks(chunks: (Chunk | null)[]): Promise<Region> {
 export async function writeEntry(chunk: Chunk | null): Promise<Entry | null> {
   if (chunk === null) return null;
   const { data: nbt, timestamp, compression, index } = chunk;
-  const data: Uint8Array = await write(nbt,{ name: "", endian: "big", compression, bedrockLevel: null });
+  const data: Uint8Array = await write(nbt,{ rootName: "", endian: "big", compression, bedrockLevel: null });
   return { data, timestamp, compression, index };
 }
