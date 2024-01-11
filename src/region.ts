@@ -84,7 +84,7 @@ export function* readEntries(region: Uint8Array): Generator<Entry | null, void, 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
     let byteOffset = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
     let byteLength = view.getUint8(i + 3) * ENTRY_LENGTH;
-    if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
+    // if (i / LOCATION_LENGTH === 17) console.log(byteOffset,byteLength);
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
 
     if (byteLength === 0){
