@@ -1,24 +1,20 @@
-import { read } from "nbtify";
-
 export const REGION_LENGTH = 1024;
 
-const format = { rootName: true, endian: "big", compression: "deflate", bedrockLevel: false } as const;
-
-export interface Region extends ReadonlyArray<Entry | null> {
-  [index: number]: Entry | null;
+export interface Region extends ReadonlyArray<Entry> {
+  [index: number]: Entry;
 }
 
 export async function readRegion(region: Uint8Array): Promise<Region> {
-  const entries: Region = Object.seal(Array<Region[number]>(REGION_LENGTH).fill(null));
+  const entries: Region = Object.seal(Array.from<Region[number]>({ length: REGION_LENGTH }));
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
+    const index: number = i / LOCATION_LENGTH;
     const byteOffset = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
     const byteLength = view.getUint8(i + 3) * ENTRY_LENGTH;
     const timestamp = view.getUint32(i + TIMESTAMPS_OFFSET);
-    const data: Uint8Array | null = byteLength !== 0 ? (await read(region.subarray(byteOffset + 5,byteOffset + byteLength),format)).data : null;
-    if (data) var { xPos, yPos, zPos } = data;
-    entries[i / LOCATION_LENGTH] = { data: data !== null ? { xPos, yPos, zPos } : data, byteOffset, timestamp };
+    const data: Uint8Array | null = byteLength !== 0 ? {} /*region.subarray(byteOffset + 5,byteOffset + byteLength)*/ : null;
+    entries[i / LOCATION_LENGTH] = { data, index, timestamp, byteOffset };
   }
 
   return entries;
@@ -37,6 +33,7 @@ export const ENTRY_HEADER_LENGTH = 5;
 
 export interface Entry {
   data: Uint8Array | null;
-  byteOffset: number;
+  index: number;
   timestamp: number;
+  byteOffset: number;
 }

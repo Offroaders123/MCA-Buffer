@@ -6,5 +6,11 @@ const REGION = new URL("./r.2.1.mca",import.meta.url);
 const data = await readFile(REGION);
 console.log(data);
 
-const region = await readRegion(data);
-region.forEach(chunk => console.log(chunk));
+const region = (await readRegion(data)).slice(15,20);
+console.log(region);
+
+region.sort((a,b) => a.byteOffset - b.byteOffset);
+console.log(region);
+
+region.sort((a,b) => a.index - b.index);
+console.log(region);
