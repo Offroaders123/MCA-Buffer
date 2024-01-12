@@ -1,3 +1,5 @@
+import type { Compression } from "nbtify";
+
 export const LOCATIONS_OFFSET = 0;
 export const LOCATIONS_LENGTH = 4096;
 export const LOCATION_LENGTH = 4;
@@ -38,6 +40,30 @@ export function readRegion(region: Uint8Array): Region {
   }
 
   return entries;
+}
+
+export function readEntries(region: Region){
+  return region.map(({ data, index, byteOffset, byteLength, timestamp }) => {
+    if (data === null){
+      return { data: null };
+    }
+
+    const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
+    const blockByteLength = view.getUint32(0) - 1;
+    let compression: Compression;
+    const scheme = view.getUint8(4);
+
+    switch (scheme){
+      case 1: compression = "gzip"; break;
+      case 2: compression = "deflate"; break;
+      case 3: compression = null; break;
+      default: throw new TypeError(`Encountered unsupported compression scheme '${scheme}', must be a valid compression type`);
+    }
+
+    const result = data.subarray(ENTRY_HEADER_LENGTH,ENTRY_HEADER_LENGTH + blockByteLength);
+
+    return { data: result, index, byteOffset, byteLength, timestamp, compression };
+  });
 }
 
 export function writeRegion(region: Region): Uint8Array {
