@@ -52,6 +52,9 @@ export function writeRegion(region: Region): Uint8Array {
     view.setUint32(headerIndex,(entry.byteOffset / ENTRY_LENGTH) << 8);
     view.setUint8(headerIndex + 3,entry.byteLength / ENTRY_LENGTH);
     view.setUint32(headerIndex + TIMESTAMPS_OFFSET,entry.timestamp);
+    if (entry.data !== null){
+      data.set(entry.data,entry.byteOffset);
+    }
   }
 
   return data;
