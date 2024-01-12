@@ -25,39 +25,33 @@ export interface EntryLike {
   data: Uint8Array | null;
   index: number;
   timestamp: number;
-  byteOffset: number;
-  byteLength: number;
+  byteOffset?: number;
 }
 
-export function readRegion(region: Uint8Array): Region {
-  const entries: Region = Object.seal(Array.from<Region[number]>({ length: REGION_LENGTH }));
+export function readRegion(region: Uint8Array): Region<JavaEntry> {
+  const entries: Region<JavaEntry> = Object.seal(Array.from<JavaEntry>({ length: REGION_LENGTH }));
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
     const index: number = i / LOCATION_LENGTH;
-    const byteOffset: number = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
-    const byteLength: number = view.getUint8(i + 3) * ENTRY_LENGTH;
+    const entryOffset: number = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
+    const entryLength: number = view.getUint8(i + 3) * ENTRY_LENGTH;
     const timestamp: number = view.getUint32(i + TIMESTAMPS_OFFSET);
-    const data: Uint8Array | null = byteLength !== 0 ? region.subarray(byteOffset,byteOffset + byteLength) : null;
+    const entry: Uint8Array | null = entryLength !== 0 ? region.subarray(entryOffset,entryOffset + entryLength) : null;
 
-    entries[index] = { data, index, timestamp, byteOffset, byteLength };
-  }
+    // entries[index] = { data, index, timestamp, byteOffset: entryOffset };
 
-  return entries;
-}
+    // Java code specifically
 
-export function readEntries(region: Region): Region<JavaEntry> {
-  return region.map((entry): JavaEntry => {
-    if (entry.data === null){
-      return { ...entry, compression: null };
+    if (entry === null){
+      entries[index] = { data: entry, index, timestamp, byteOffset: entryOffset, compression: null };
+      continue;
     }
 
-    const { data, index, byteOffset, byteLength, timestamp } = entry;
-
-    const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
-    const blockByteLength = view.getUint32(0) - 1;
+    // 0, relative to block
+    const blockByteLength = view.getUint8(entryOffset) - 1;
     let compression: Compression;
-    const scheme = view.getUint8(4);
+    const scheme = view.getUint8(entryOffset + 4);
 
     switch (scheme){
       case 1: compression = "gzip"; break;
@@ -66,10 +60,12 @@ export function readEntries(region: Region): Region<JavaEntry> {
       default: throw new TypeError(`Encountered unsupported compression scheme '${scheme}', must be a valid compression type`);
     }
 
-    const result = data.subarray(ENTRY_HEADER_LENGTH,ENTRY_HEADER_LENGTH + blockByteLength);
+    const data = entry.subarray(ENTRY_HEADER_LENGTH,blockByteLength);
 
-    return { data: result, index, byteOffset, byteLength, timestamp, compression };
-  });
+    entries[index] = { data, index, timestamp, byteOffset: entryOffset, compression };
+  }
+
+  return entries;
 }
 
 export function writeRegion(region: Region): Uint8Array {
