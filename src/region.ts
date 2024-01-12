@@ -25,11 +25,12 @@ export interface EntryLike {
   data: Uint8Array | null;
   index: number;
   timestamp: number;
-  byteOffset?: number;
+  byteOffset: number;
+  byteLength: number;
 }
 
-export function readRegion(region: Uint8Array): Region<JavaEntry> {
-  const entries: Region<JavaEntry> = Object.seal(Array.from<JavaEntry>({ length: REGION_LENGTH }));
+export function readRegion(region: Uint8Array): Region {
+  const entries: Region = Object.seal(Array.from<Region[number]>({ length: REGION_LENGTH }));
   const view = new DataView(region.buffer,region.byteOffset,region.byteLength);
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH){
@@ -39,8 +40,9 @@ export function readRegion(region: Uint8Array): Region<JavaEntry> {
     const timestamp: number = view.getUint32(i + TIMESTAMPS_OFFSET);
     const entry: Uint8Array | null = entryLength !== 0 ? region.subarray(entryOffset,entryOffset + entryLength) : null;
 
-    // entries[index] = { data, index, timestamp, byteOffset: entryOffset };
-
+    entries[index] = { data: entry, index, timestamp, byteOffset: entryOffset, byteLength: entryLength };
+    continue;
+/*
     // Java code specifically
 
     if (entry === null){
@@ -62,7 +64,7 @@ export function readRegion(region: Uint8Array): Region<JavaEntry> {
 
     const data = entry.subarray(ENTRY_HEADER_LENGTH,blockByteLength);
 
-    entries[index] = { data, index, timestamp, byteOffset: entryOffset, compression };
+    entries[index] = { data, index, timestamp, byteOffset: entryOffset, compression };*/
   }
 
   return entries;

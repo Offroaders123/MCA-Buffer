@@ -20,6 +20,6 @@ console.log(redata);
 
 console.log("\nequality comparison:",Buffer.compare(data,redata),"== 0");
 
-function prettyPrint(region: Region): Omit<Region[number], "data">[] {
-  return region.map(({ index, timestamp, byteOffset }) => ({ index, timestamp, byteOffset }));
-}
+// function prettyPrint(region: Region): Omit<Region[number], "data">[] {
+//   return region.map(({ index, timestamp, byteOffset }) => ({ index, timestamp, byteOffset }));
+// }
