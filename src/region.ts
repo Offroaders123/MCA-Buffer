@@ -13,11 +13,15 @@ export const ENTRY_HEADER_LENGTH = 5;
 
 export const REGION_LENGTH = 1024;
 
-export interface Region extends ReadonlyArray<Entry> {
-  [index: number]: Entry;
+export interface Region<T extends EntryLike = EntryLike> extends ReadonlyArray<T> {
+  [index: number]: T;
 }
 
-export interface Entry {
+export interface JavaEntry extends EntryLike {
+  compression: Compression;
+}
+
+export interface EntryLike {
   data: Uint8Array | null;
   index: number;
   timestamp: number;
@@ -42,11 +46,13 @@ export function readRegion(region: Uint8Array): Region {
   return entries;
 }
 
-export function readEntries(region: Region){
-  return region.map(({ data, index, byteOffset, byteLength, timestamp }) => {
-    if (data === null){
-      return { data: null };
+export function readEntries(region: Region): Region<JavaEntry> {
+  return region.map((entry): JavaEntry => {
+    if (entry.data === null){
+      return { ...entry, compression: null };
     }
+
+    const { data, index, byteOffset, byteLength, timestamp } = entry;
 
     const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
     const blockByteLength = view.getUint32(0) - 1;
