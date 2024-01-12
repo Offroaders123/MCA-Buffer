@@ -20,6 +20,7 @@ export interface Entry {
   index: number;
   timestamp: number;
   byteOffset: number;
+  byteLength: number;
 }
 
 export function readRegion(region: Uint8Array): Region {
@@ -33,7 +34,7 @@ export function readRegion(region: Uint8Array): Region {
     const timestamp: number = view.getUint32(i + TIMESTAMPS_OFFSET);
     const data: Uint8Array | null = byteLength !== 0 ? region.subarray(byteOffset,byteOffset + byteLength) : null;
 
-    entries[index] = { data, index, timestamp, byteOffset };
+    entries[index] = { data, index, timestamp, byteOffset, byteLength };
   }
 
   return entries;
@@ -42,5 +43,16 @@ export function readRegion(region: Uint8Array): Region {
 export function writeRegion(region: Region): Uint8Array {
   const byteLength: number = region.reduce((accumulator,entry) => accumulator + (entry.data?.byteLength ?? 0),LOCATIONS_LENGTH + TIMESTAMPS_LENGTH);
   const data = new Uint8Array(byteLength);
+  const view = new DataView(data.buffer,data.byteOffset,data.byteLength);
+
+  const entries: Region = region.toSorted((previous,next) => previous.byteOffset - next.byteOffset);
+
+  for (const entry of entries){
+    const headerIndex: number = entry.index * LOCATION_LENGTH;
+    view.setUint32(headerIndex,(entry.byteOffset / ENTRY_LENGTH) << 8);
+    view.setUint8(headerIndex + 3,entry.byteLength / ENTRY_LENGTH);
+    view.setUint32(headerIndex + TIMESTAMPS_OFFSET,entry.timestamp);
+  }
+
   return data;
 }
