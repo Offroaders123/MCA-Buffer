@@ -1,20 +1,12 @@
 import { read, write, NBTData } from "nbtify";
 
-import type { IntTag, CompoundTag } from "nbtify";
+import type { Chunk as ChunkData } from "../Region-Types/src/java/index.js";
 import type { Region, Entry } from "./region.js";
-
-/* These types should eventually be derived from Region-Types. */
 
 export class Chunk extends NBTData<ChunkData> {
   constructor(data: NBTData<ChunkData>, public timestamp: number, public index?: number) {
     super(data);
   }
-}
-
-export interface ChunkData extends CompoundTag {
-  xPos: IntTag;
-  yPos: IntTag;
-  zPos: IntTag;
 }
 
 export async function readChunks(region: Region): Promise<(Chunk | null)[]> {
