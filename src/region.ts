@@ -1,5 +1,7 @@
 import { ENTRY_LENGTH } from "./chunk.js";
 
+import type { Chunk } from "./chunk.js";
+
 export const LOCATIONS_OFFSET = 0;
 export const LOCATIONS_LENGTH = 4096;
 export const LOCATION_LENGTH = 4;
@@ -10,13 +12,6 @@ export const TIMESTAMP_LENGTH = 4;
 
 export type Region = Chunk[];
 
-export interface Chunk {
-  index: number;
-  byteOffset: number;
-  byteLength: number;
-  timestamp: number;
-}
-
 export function readRegion(data: Uint8Array): Region {
   const chunks: Region = [];
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
@@ -26,8 +21,9 @@ export function readRegion(data: Uint8Array): Region {
     const byteOffset: number = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
     const byteLength: number = view.getUint8(i + 3) * ENTRY_LENGTH;
     const timestamp: number = view.getUint32(i + TIMESTAMPS_OFFSET);
+    const sector: Uint8Array | null = byteLength !== 0 ? data.subarray(byteOffset, byteOffset + byteLength) : null;
 
-    chunks.push({ index, byteOffset, byteLength, timestamp });
+    chunks.push({ index, sector, timestamp });
   }
 
   return chunks;
