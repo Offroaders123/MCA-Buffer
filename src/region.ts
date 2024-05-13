@@ -8,7 +8,10 @@ export const TIMESTAMP_LENGTH = 4;
 
 export const ENTRY_LENGTH = 4096;
 
+export type Region = Chunk[];
+
 export interface Chunk {
+  data: Uint8Array | null;
   x: number;
   z: number;
   index: number;
@@ -17,8 +20,8 @@ export interface Chunk {
   timestamp: number;
 }
 
-export function readRegion(data: Uint8Array): Chunk[] {
-  const chunks: Chunk[] = [];
+export function readRegion(data: Uint8Array): Region {
+  const chunks: Region = [];
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH) {
@@ -27,8 +30,9 @@ export function readRegion(data: Uint8Array): Chunk[] {
     const byteOffset: number = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
     const byteLength: number = view.getUint8(i + 3) * ENTRY_LENGTH;
     const timestamp: number = view.getUint32(i + TIMESTAMPS_OFFSET);
+    const entry: Uint8Array | null = byteLength !== 0 ? data.subarray(byteOffset, byteOffset + byteLength) : null;
 
-    chunks.push({ x, z, index, byteOffset, byteLength, timestamp });
+    chunks.push({ data: entry, x, z, index, byteOffset, byteLength, timestamp });
   }
 
   return chunks;
