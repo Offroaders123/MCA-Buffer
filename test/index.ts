@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { readChunks, readRegion } from "../src/index.js";
+import { readChunks, readRegion, writeChunk } from "../src/index.js";
 
 const REGION = new URL("./r.2.1.mca",import.meta.url);
 
@@ -11,9 +11,18 @@ const region = readRegion(data);
 //   region
 //     .slice(1000)
 // );
+console.log(region[64]!);
 
 const chunks = await readChunks(data, region);
-console.log(
-  chunks
-    // .slice(1000)
-);
+// console.log(
+//   chunks
+//     // .slice(1000)
+// );
+
+const chunk = chunks[64]!;
+console.log(chunk.data);
+
+const sector = await writeChunk(chunk);
+console.log(sector);
+
+console.log(Buffer.compare(chunk.data, sector));

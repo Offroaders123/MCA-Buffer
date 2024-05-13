@@ -1,3 +1,5 @@
+import { ENTRY_LENGTH } from "./chunk.js";
+
 export const LOCATIONS_OFFSET = 0;
 export const LOCATIONS_LENGTH = 4096;
 export const LOCATION_LENGTH = 4;
@@ -5,8 +7,6 @@ export const LOCATION_LENGTH = 4;
 export const TIMESTAMPS_OFFSET = LOCATIONS_LENGTH;
 export const TIMESTAMPS_LENGTH = 4096;
 export const TIMESTAMP_LENGTH = 4;
-
-export const ENTRY_LENGTH = 4096;
 
 export type Region = Chunk[];
 
