@@ -12,7 +12,7 @@ const region = readRegion(data);
 //     .slice(1000)
 // );
 
-const chunks = await readChunks(region);
+const chunks = await readChunks(data, region);
 console.log(
   chunks
     // .slice(1000)

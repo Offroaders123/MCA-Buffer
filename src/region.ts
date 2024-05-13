@@ -11,9 +11,6 @@ export const ENTRY_LENGTH = 4096;
 export type Region = Chunk[];
 
 export interface Chunk {
-  data: Uint8Array | null;
-  x: number;
-  z: number;
   index: number;
   byteOffset: number;
   byteLength: number;
@@ -26,13 +23,11 @@ export function readRegion(data: Uint8Array): Region {
 
   for (let i = LOCATIONS_OFFSET; i < LOCATIONS_OFFSET + LOCATIONS_LENGTH; i += LOCATION_LENGTH) {
     const index: number = i / LOCATION_LENGTH;
-    const [x, z] = chunkCoordinateFromIndex(index);
     const byteOffset: number = (view.getUint32(i) >> 8) * ENTRY_LENGTH;
     const byteLength: number = view.getUint8(i + 3) * ENTRY_LENGTH;
     const timestamp: number = view.getUint32(i + TIMESTAMPS_OFFSET);
-    const entry: Uint8Array | null = byteLength !== 0 ? data.subarray(byteOffset, byteOffset + byteLength) : null;
 
-    chunks.push({ data: entry, x, z, index, byteOffset, byteLength, timestamp });
+    chunks.push({ index, byteOffset, byteLength, timestamp });
   }
 
   return chunks;
