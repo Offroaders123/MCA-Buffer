@@ -4,6 +4,8 @@ import type { Format } from "nbtify";
 import type { Chunk as ChunkData } from "../Region-Types/src/java/index.js";
 import type { Region, Chunk } from "./region.js";
 
+export const ENTRY_HEADER_LENGTH = 5;
+
 export const CHUNK_NBT_FORMAT = {
   rootName: "",
   endian: "big",
@@ -12,14 +14,16 @@ export const CHUNK_NBT_FORMAT = {
 } as const satisfies Format;
 
 export async function readChunks(region: Region) {
-  return Promise.all(region.map(readEntry));
+  return Promise.all(region.map(readChunk));
 }
 
-export async function readEntry(entry: Chunk) {
+export async function readChunk(entry: Chunk) {
   if (entry.data === null) return null;
   const { data } = entry;
-  const payloadLength = Buffer.from(data).readUInt32BE(0);
-  const compression = Buffer.from(data).readUInt8(4);
-  const nbt = await read<ChunkData>(data.subarray(5));
-  return { data, payloadLength, compression, nbt };
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const payloadLength = view.getUint32(0, false) - 1;
+  const compression = view.getUint8(4);
+  const payload = data.subarray(ENTRY_HEADER_LENGTH, ENTRY_HEADER_LENGTH + payloadLength);
+  const nbt = await read<ChunkData>(payload, { ...CHUNK_NBT_FORMAT });
+  return { payload, payloadLength, compression, nbt };
 }

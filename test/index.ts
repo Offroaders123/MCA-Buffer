@@ -7,10 +7,13 @@ const data = await readFile(REGION);
 console.log(data);
 
 const region = readRegion(data);
-console.log(
-  region
-    .slice(1000)
-);
+// console.log(
+//   region
+//     .slice(1000)
+// );
 
 const chunks = await readChunks(region);
-console.log(chunks);
+console.log(
+  chunks
+    // .slice(1000)
+);
