@@ -19,11 +19,11 @@ export async function readChunks(region: Region) {
 
 export async function readChunk(entry: Chunk) {
   if (entry.data === null) return null;
-  const { data } = entry;
+  const { data, x, z } = entry;
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const payloadLength = view.getUint32(0, false) - 1;
   const compression = view.getUint8(4);
   const payload = data.subarray(ENTRY_HEADER_LENGTH, ENTRY_HEADER_LENGTH + payloadLength);
   const nbt = await read<ChunkData>(payload, { ...CHUNK_NBT_FORMAT });
-  return { payload, payloadLength, compression, nbt };
+  return { payload, payloadLength, compression, nbt, x, z };
 }
